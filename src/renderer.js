@@ -28,7 +28,29 @@ export class Renderer {
  }
  ocean(ctx,n,t,dawn){const sea=ctx.createLinearGradient(0,275,0,850);sea.addColorStop(0,`rgba(22,71,89,${.28-dawn*.15})`);sea.addColorStop(1,`rgba(7,19,30,${.26-dawn*.1})`);ctx.fillStyle=sea;ctx.fillRect(0,275,W,570);
  ctx.strokeStyle=dawn?'rgba(255,241,214,.18)':'rgba(185,232,217,.105)';ctx.lineWidth=1;for(let i=0;i<35;i++){let x=(i*89+((t*2*(i%3+1))%80))%420-22,y=282+(i*53)%516;ctx.beginPath();ctx.ellipse(x,y,11+(i%4)*5,1.8,0,Math.PI*.07,Math.PI*.92);ctx.stroke();}}
- arena(ctx){ctx.strokeStyle='rgba(73,183,173,.13)';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(C.x,C.y,CONFIG.ARENA_RADIUS,0,TAU);ctx.stroke();ctx.beginPath();ctx.arc(C.x,C.y,105,0,TAU);ctx.strokeStyle='rgba(255,213,138,.055)';ctx.stroke();}
+ arena(ctx){
+  // A quiet compass rose beneath the gameplay, not a competing HUD.
+  ctx.save();ctx.translate(C.x,C.y);
+  for(const [radius,alpha] of [[CONFIG.ARENA_RADIUS,.23],[105,.085],[52,.055]]){
+   ctx.strokeStyle=`rgba(192,177,139,${alpha})`;ctx.lineWidth=radius>150?1.1:.65;
+   ctx.beginPath();ctx.arc(0,0,radius,0,TAU);ctx.stroke();
+  }
+  ctx.strokeStyle='rgba(185,155,103,.16)';ctx.lineWidth=.7;
+  ctx.setLineDash([2,7]);for(let i=0;i<8;i++){
+   const a=i*TAU/8;ctx.beginPath();ctx.moveTo(Math.cos(a)*57,Math.sin(a)*57);
+   ctx.lineTo(Math.cos(a)*173,Math.sin(a)*173);ctx.stroke();
+  }ctx.setLineDash([]);
+  for(let i=0;i<48;i++){
+   const a=i*TAU/48,major=i%4===0,start=major?174:179;
+   ctx.strokeStyle=major?'rgba(220,188,124,.35)':'rgba(185,155,103,.17)';
+   ctx.beginPath();ctx.moveTo(Math.cos(a)*start,Math.sin(a)*start);
+   ctx.lineTo(Math.cos(a)*183,Math.sin(a)*183);ctx.stroke();
+  }
+  ctx.font='10px Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(232,199,137,.57)';
+  for(const [letter,x,y] of [['N',0,-199],['E',199,0],['S',0,199],['W',-199,0]])ctx.fillText(letter,x,y);
+  ctx.restore();
+ }
  beam(ctx,run,t){const p=run.player,statsAngle=CONFIG.BEAM_HALF_ANGLE+.045*(run.upgrades.wide_lens||0),angle=p.beamAngle,active=p.beamActive,r=CONFIG.BEAM_RANGE;
  const cone=(a,half,alpha)=>{ctx.beginPath();ctx.moveTo(C.x,C.y);ctx.arc(C.x,C.y,r,a-half,a+half);ctx.closePath();let g=ctx.createRadialGradient(C.x,C.y,5,C.x,C.y,r);g.addColorStop(0,`rgba(255,213,138,${alpha})`);g.addColorStop(1,'rgba(255,213,138,.02)');ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.moveTo(C.x,C.y);ctx.lineTo(C.x+Math.cos(a)*r,C.y+Math.sin(a)*r);ctx.strokeStyle=`rgba(255,241,214,${alpha+.05})`;ctx.lineWidth=active?2:1;ctx.stroke();};
  cone(angle,active?statsAngle:.028,active?.23:.055);
@@ -65,6 +87,96 @@ export class Renderer {
  hollowKing(ctx,run,t){const fade=run.phase==='finale_dawn'?1-run.finale.dawnProgress:run.phase==='finale_align'?.3:1;ctx.save();ctx.globalAlpha=.75*fade;ctx.fillStyle=PALETTE.black;ctx.beginPath();ctx.moveTo(66,326);ctx.bezierCurveTo(35,180,102,160,195,171);ctx.bezierCurveTo(280,160,366,189,321,326);ctx.quadraticCurveTo(200,260,66,326);ctx.fill();ctx.fillStyle=PALETTE.violet;ctx.fillRect(153,226,15,3);ctx.fillRect(222,226,15,3);ctx.restore();}
  fleet(ctx,run,t){const count=Math.min(24,Math.max(8,8+Math.floor((run.totalRescuesAtStart||0)/2)));for(let i=0;i<count;i++){const x=22+i*(346/Math.max(1,count-1)),y=308+Math.sin(i*3)*16;ctx.strokeStyle='rgba(255,213,138,.3)';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(C.x,C.y);ctx.stroke();ctx.fillStyle=PALETTE.night;ctx.beginPath();ctx.moveTo(x-9,y+2);ctx.lineTo(x+9,y+2);ctx.lineTo(x+5,y+7);ctx.lineTo(x-6,y+7);ctx.closePath();ctx.fill();ctx.fillStyle=PALETTE.gold;ctx.beginPath();ctx.arc(x,y,2,0,TAU);ctx.fill();}}
  alignment(ctx,run,t){const x=195,y=250;this.ring(ctx,x,y,32,run.finale.alignProgress/5,PALETTE.gold);this.star(ctx,x,y,17,PALETTE.gold);this.word(ctx,'GUIDE THE LIGHT INTO THE SKY',195,185,12,PALETTE.paper);this.word(ctx,`${run.finale.alignProgress.toFixed(1)} / 5.0s`,195,305,14,PALETTE.gold);}
- titleArt(ctx,t){this.arena(ctx);const fake={player:{beamAngle:-1.2,beamActive:true},upgrades:{},pipPresent:true,ability:{sweepRemaining:0}};this.beam(ctx,fake,t);this.lighthouse(ctx,fake,t);for(let i=0;i<3;i++)this.boat(ctx,108+i*86,510+(i%2)*32,0,t);}
+ titleArt(ctx,t){
+  // An engraved lighthouse plate. All shapes are drawn in Canvas 2D.
+  const shift=Math.sin(t*.18)*.08,xx=195,lanternY=169;
+  ctx.save();
+  const halo=ctx.createRadialGradient(308,117,0,308,117,72);
+  halo.addColorStop(0,'rgba(243,224,182,.17)');halo.addColorStop(1,'rgba(243,224,182,0)');
+  ctx.fillStyle=halo;ctx.fillRect(216,25,184,180);
+  ctx.strokeStyle='rgba(210,186,139,.3)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(304,115,37,0,TAU);ctx.stroke();
+  ctx.beginPath();ctx.arc(304,115,43,.9,4.5);ctx.stroke();
+  // Compass arcs, fine survey lines and guide marks.
+  ctx.save();ctx.translate(xx,201);ctx.strokeStyle='rgba(160,182,173,.16)';
+  ctx.beginPath();ctx.arc(0,0,136,3.47,5.98);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,157,3.64,5.71);ctx.stroke();
+  for(let i=0;i<31;i++){
+   const a=3.47+i*(2.51/30),r=i%5===0?134:139;
+   ctx.beginPath();ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r);
+   ctx.lineTo(Math.cos(a)*145,Math.sin(a)*145);ctx.stroke();
+  }ctx.restore();
+  ctx.strokeStyle='rgba(202,193,154,.26)';ctx.lineWidth=.7;
+  ctx.beginPath();ctx.moveTo(27,326);ctx.lineTo(363,326);ctx.stroke();
+  ctx.setLineDash([1,7]);ctx.beginPath();ctx.moveTo(195,37);ctx.lineTo(195,332);ctx.stroke();ctx.setLineDash([]);
+  // Searchlight with an animated bearing and softly illuminated dust.
+  const a=-.55+shift,reach=320,spread=.18;
+  ctx.beginPath();ctx.moveTo(xx,lanternY);
+  ctx.arc(xx,lanternY,reach,a-spread,a+spread);ctx.closePath();
+  const light=ctx.createRadialGradient(xx,lanternY,4,xx,lanternY,reach);
+  light.addColorStop(0,'rgba(255,231,164,.34)');light.addColorStop(.43,'rgba(237,197,120,.12)');
+  light.addColorStop(1,'rgba(237,197,120,0)');ctx.fillStyle=light;ctx.fill();
+  ctx.strokeStyle='rgba(255,219,148,.29)';ctx.lineWidth=.6;
+  for(const side of [-1,1]){
+   ctx.beginPath();ctx.moveTo(xx,lanternY);
+   ctx.lineTo(xx+Math.cos(a+spread*side)*reach,lanternY+Math.sin(a+spread*side)*reach);ctx.stroke();
+  }
+  // Low island rock. Layered blocks and hatch marks suggest an engraving.
+  ctx.fillStyle='#07161d';ctx.beginPath();ctx.moveTo(0,357);ctx.lineTo(39,342);
+  ctx.lineTo(90,345);ctx.lineTo(136,316);ctx.lineTo(168,320);ctx.lineTo(193,304);
+  ctx.lineTo(219,320);ctx.lineTo(258,316);ctx.lineTo(290,342);ctx.lineTo(352,348);
+  ctx.lineTo(390,357);ctx.lineTo(390,410);ctx.lineTo(0,410);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(126,167,163,.34)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,357);ctx.lineTo(90,345);ctx.lineTo(136,316);
+  ctx.lineTo(168,320);ctx.lineTo(193,304);ctx.lineTo(219,320);
+  ctx.lineTo(258,316);ctx.lineTo(290,342);ctx.lineTo(390,357);ctx.stroke();
+  for(let i=0;i<26;i++){
+   const x=(i*61+18)%390,y=359+(i*19)%34;
+   ctx.strokeStyle='rgba(120,150,145,.13)';ctx.beginPath();ctx.moveTo(x,y);
+   ctx.lineTo(x+12,y-4);ctx.stroke();
+  }
+  // Tapered stone shaft, fluted metal lantern and observation gallery.
+  ctx.fillStyle='#63767a';ctx.beginPath();ctx.moveTo(165,311);ctx.lineTo(178,193);
+  ctx.lineTo(210,193);ctx.lineTo(227,311);ctx.closePath();ctx.fill();
+  const masonry=ctx.createLinearGradient(160,0,229,0);
+  masonry.addColorStop(0,'#1b3941');masonry.addColorStop(.43,'#b7b5a2');
+  masonry.addColorStop(.78,'#74868a');masonry.addColorStop(1,'#15303a');
+  ctx.fillStyle=masonry;ctx.beginPath();ctx.moveTo(168,306);ctx.lineTo(180,194);
+  ctx.lineTo(208,194);ctx.lineTo(222,306);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(231,220,181,.33)';ctx.lineWidth=1;
+  for(let y=214;y<=287;y+=13){const left=180-(y-194)*.10,right=208+(y-194)*.12;
+   ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke();
+  }
+  ctx.fillStyle='#182d34';ctx.fillRect(190,269,10,37);
+  ctx.strokeStyle='#b6ac8e';ctx.strokeRect(190.5,268.5,10,38);
+  ctx.fillStyle='#263f45';ctx.fillRect(179,191,31,8);
+  ctx.fillStyle='#0a222c';ctx.fillRect(172,184,46,8);
+  ctx.strokeStyle='#c1a878';ctx.strokeRect(173,184,45,7);
+  ctx.fillStyle='#0b2028';ctx.fillRect(178,154,33,30);
+  ctx.fillStyle='#f8d69a';ctx.fillRect(182,158,25,22);
+  const glass=ctx.createLinearGradient(182,158,206,158);
+  glass.addColorStop(0,'#977d50');glass.addColorStop(.5,'#ffe4a5');glass.addColorStop(1,'#c4a56d');
+  ctx.fillStyle=glass;ctx.fillRect(185,159,19,21);
+  ctx.strokeStyle='#17313a';ctx.lineWidth=2;
+  for(const x of [182,190,198,206]){ctx.beginPath();ctx.moveTo(x,156);ctx.lineTo(x,183);ctx.stroke();}
+  ctx.fillStyle='#0d2530';ctx.beginPath();ctx.moveTo(168,153);
+  ctx.lineTo(194,138);ctx.lineTo(220,153);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#c6ad7d';ctx.beginPath();ctx.moveTo(168,153);ctx.lineTo(194,138);ctx.lineTo(220,153);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(194,138);ctx.lineTo(194,131);ctx.stroke();
+  ctx.fillStyle='#f5d79b';ctx.beginPath();ctx.arc(194,169,5,0,TAU);ctx.fill();
+  const glow=ctx.createRadialGradient(194,169,1,194,169,50);
+  glow.addColorStop(0,'rgba(255,215,149,.45)');glow.addColorStop(1,'rgba(255,215,149,0)');
+  ctx.fillStyle=glow;ctx.fillRect(140,115,110,108);
+  // Two quiet navigational annotations.
+  ctx.fillStyle='rgba(198,175,126,.6)';ctx.font='9px Georgia, serif';
+  ctx.textAlign='left';ctx.fillText('N  47°',23,77);
+  ctx.textAlign='right';ctx.fillText('THE LAST BEACON',365,302);
+  for(let i=0;i<8;i++){
+   const y=358+i*5,offset=(i%3)*17;
+   ctx.strokeStyle=`rgba(153,188,177,${.08+i*.007})`;ctx.lineWidth=.65;
+   ctx.beginPath();ctx.moveTo(10+offset,y);ctx.bezierCurveTo(116,y-3,287,y+4,385-offset,y);ctx.stroke();
+  }
+  ctx.restore();
+ }
  word(ctx,text,x,y,size,color){ctx.save();ctx.fillStyle=color;ctx.font=`700 ${size}px system-ui`;ctx.textAlign='center';ctx.shadowColor=PALETTE.night;ctx.shadowBlur=8;ctx.fillText(text,x,y);ctx.restore();}
 }
