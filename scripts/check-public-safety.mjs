@@ -5,6 +5,7 @@
  * This is a safety net, not comprehensive secret scanning.
  */
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +13,12 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SKIP_DIRECTORIES = new Set(['.git', '.idea', '.vscode', 'node_modules', 'coverage', 'dist', 'build', '.cache']);
 const MAX_FILE_SIZE = 2_000_000;
+// These two published game captures were reviewed before inclusion.
+// Keep the checksums explicit so a later binary replacement needs another review.
+const REVIEWED_MEDIA = new Map([
+  ['docs/media/title.gif', 'eefb55de33144165c704ea574ec6e955e83afbd113a26dbee292cadc3092689e'],
+  ['docs/media/gameplay.gif', '9463e12f438221376a6271a57c1d08e8855b87ad5c47da9edeea685c6cad4a3a'],
+]);
 
 const SENSITIVE_PATHS = [
   /(^|\/)\.env(?:\.|$)/i,
@@ -97,6 +104,11 @@ export function auditFiles(root, files) {
     }
     const bytes = fs.readFileSync(absolute);
     if (bytes.includes(0)) {
+      const approvedDigest = REVIEWED_MEDIA.get(safeRelative);
+      const verifiedCapture = approvedDigest &&
+        bytes.subarray(0, 6).toString('ascii') === 'GIF89a' &&
+        createHash('sha256').update(bytes).digest('hex') === approvedDigest;
+      if (verifiedCapture) continue;
       findings.push({ path: safeRelative, label: 'Binary file requires metadata review' });
       continue;
     }
