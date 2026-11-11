@@ -1,4 +1,67 @@
+# Operating systems and editors
 .DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*.orig
+*~
+
+# Generated files and local tooling
 node_modules/
 coverage/
+.nyc_output/
+dist/
+build/
+.cache/
+.tmp/
+tmp/
+temp/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local configuration, credentials and private keys
+# This browser-only game must never need committed environment variables.
+.env
+.env.*
+*.local
+.npmrc
+.pypirc
+.netrc
+.ssh/
+.aws/
+.gnupg/
+.secrets/
+secrets/
+credentials.json
+service-account*.json
+*-service-account.json
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.pem
+*.key
+*.p8
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Personal data stores, backups and local exports
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+*.backup
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+
+# Note: .gitignore does not protect files that are already tracked in Git.
+# The CI public-safety check inspects the committed files as a second guard.

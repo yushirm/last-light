@@ -2,6 +2,8 @@
 
 **A tiny lighthouse. An endless ocean. Seven nights to bring back the Sun.**
 
+> **AI-generated code disclosure:** The initial game implementation, tests and project documentation were generated using OpenAI ChatGPT from a detailed design specification. The repository owner did **not** hand-write the initial implementation. Future changes may also be AI-assisted. This code is shared transparently for review and is not presented as manually authored or independently security certified.
+
 Last Light is a complete, original, single-player browser game built with dependency-free HTML5 Canvas 2D, vanilla JavaScript ES modules, CSS and Web Audio. It is hosted as static files. No backend, tracking, account, download, or external asset is needed.
 
 ## Play locally
@@ -49,3 +51,21 @@ The simulation, encounters, mathematics and persistence modules are importable f
 - `src/controller.js`, `src/main.js`: one-frame-loop orchestration and bootstrap.
 
 For copyright and redistribution terms, see `LICENSE`.
+
+## Public-repository safeguards
+
+The project is intentionally dependency-free, so CI does not run `npm install`, fetch code-generation tools or require project secrets. GitHub Actions use read-only permissions, disable persisted checkout credentials, and pin official actions to immutable commit SHAs. Dependabot checks those action versions weekly. See [SECURITY.md](SECURITY.md) for private vulnerability reporting guidance.
+
+Before publishing changes, run:
+
+```bash
+node scripts/check-public-safety.mjs
+node scripts/validate.mjs
+node --test
+```
+
+The public-safety script checks committed files for common credential signatures, personal email addresses, personal filesystem paths, and sensitive file types. It does **not** detect every secret or piece of personal information. Never commit private files or sensitive information, even if Git ignores them locally. Git ignoring a path does not remove that file from existing commits.
+
+For a public repository, also consider enabling **secret scanning and push protection**, **Dependabot alerts**, **CodeQL code scanning**, **private vulnerability reporting**, and **branch protection / repository rulesets** in GitHub Settings. These are GitHub account/repository settings, not changes that this project can activate merely by committing a file. Review the repository's visibility and GitHub Pages configuration separately. These features may vary by repository visibility and account plan.
+
+The source being viewable does not change its copyright terms. See [LICENSE](LICENSE).

@@ -1,1 +1,13 @@
-{"name":"last-light","version":"1.0.0","private":true,"type":"module","description":"Last Light, a standalone browser lighthouse adventure","scripts":{"test":"node --test","validate":"node scripts/validate.mjs","check":"node scripts/validate.mjs && node --test"}}
+{
+  "name": "last-light",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Last Light, a standalone browser lighthouse adventure",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/validate.mjs",
+    "check": "node scripts/check-public-safety.mjs && node scripts/validate.mjs && node --test",
+    "security:check": "node scripts/check-public-safety.mjs"
+  }
+}
