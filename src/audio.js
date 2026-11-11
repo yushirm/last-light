@@ -1,0 +1,11 @@
+const NOTES={beam_start:[190,320,.09],beam_hit:[260,210,.04],enemy_pop:[380,160,.12],tower_hit:[120,65,.25],upgrade:[370,570,.25],boss_intro:[73,110,.6],boss_defeated:[290,710,.8],dawn:[294,587,1.2],ui:[410,380,.05],ship_saved:[523,784,.45],star_saved:[698,880,.3],gust:[160,120,.2]};
+export class AudioManager {
+ constructor(settings){this.settings=settings;this.ctx=null;this.voices=0;this.ambientTimer=0;this.ambientIndex=0;this.lastHit=0;}
+ unlock(){if(!this.settings.soundEnabled)return;try{if(!this.ctx){const A=globalThis.AudioContext||globalThis.webkitAudioContext;if(!A)return;this.ctx=new A();}if(this.ctx.state==='suspended')this.ctx.resume().catch(()=>{});}catch{this.ctx=null;}}
+ tone(a,b,duration,volume=.035,type='sine'){const ctx=this.ctx;if(!ctx||ctx.state!=='running'||this.voices>=12)return;try{const osc=ctx.createOscillator(),gain=ctx.createGain(),now=ctx.currentTime;osc.type=type;osc.frequency.setValueAtTime(a,now);osc.frequency.exponentialRampToValueAtTime(Math.max(1,b),now+duration);gain.gain.setValueAtTime(.001,now);gain.gain.exponentialRampToValueAtTime(Math.max(.001,volume),now+.01);gain.gain.exponentialRampToValueAtTime(.001,now+duration);osc.connect(gain);gain.connect(ctx.destination);this.voices++;osc.onended=()=>{this.voices=Math.max(0,this.voices-1);osc.disconnect();gain.disconnect();};osc.start(now);osc.stop(now+duration+.02);}catch{/* Optional audio must not break play. */}}
+ play(name){if(!this.settings.soundEnabled)return;if(name==='beam_hit'&&performance.now()-this.lastHit<200)return;if(name==='beam_hit')this.lastHit=performance.now();const n=NOTES[name];if(!n)return;this.tone(n[0],n[1],n[2],.035*this.settings.sfxVolume/100,name==='enemy_pop'||name==='tower_hit'?'triangle':'sine');if(name==='ship_saved'){this.tone(659,659,.24,.022);this.tone(784,784,.36,.015);}}
+ setSettings(settings){this.settings=settings;if(!settings.soundEnabled)this.pause();}
+ updateAmbient(dt,phase){if(!this.settings.soundEnabled||!this.settings.ambientEnabled||!this.ctx||this.ctx.state!=='running')return;this.ambientTimer+=dt;if(this.ambientTimer<.75)return;this.ambientTimer=0;const tones=[146.83,174.61,196,220,261.63],index=this.ambientIndex++%tones.length;this.tone(tones[index],tones[index],.3,.009,'sine');}
+ pause(){this.ambientTimer=0;}
+ dispose(){try{this.ctx?.close();}catch{}this.ctx=null;}
+}

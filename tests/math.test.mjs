@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {clamp,normalizedAngleDifference,insideBeam,createRng,weightedChoice} from '../src/math.js';
+import {CONFIG} from '../src/config.js';
+test('math clamps, wraps and checks cone including origin',()=>{assert.equal(clamp(-1,0,1),0);assert.equal(clamp(4,0,1),1);assert.ok(Math.abs(normalizedAngleDifference(Math.PI-.01,-Math.PI+.01))<.03);const C=CONFIG.CENTER;assert.equal(insideBeam({x:C.x+100,y:C.y,radius:5},0,.16,188,C),true);assert.equal(insideBeam({x:C.x,y:C.y+100,radius:5},0,.16,188,C),false);assert.equal(insideBeam({x:C.x+210,y:C.y,radius:5},0,.16,188,C),false);assert.doesNotThrow(()=>insideBeam({x:C.x,y:C.y,radius:10},0,.16,188,C));});
+test('RNG deterministic and bounded, weighted choice safe',()=>{const a=createRng(99),b=createRng(99);for(let i=0;i<100;i++){const x=a();assert.equal(x,b());assert.ok(x>=0&&x<1);}assert.equal(weightedChoice(createRng(1),{wisp:0,drifter:10}), 'drifter');assert.equal(weightedChoice(createRng(1),{}),'wisp');});
