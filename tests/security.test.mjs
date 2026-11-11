@@ -30,3 +30,22 @@ test('local secrets and data files cannot be committed', () => {
 test('existing files are scanned without exposing matching secret values', () => {
   assert.deepEqual(auditFiles(new URL('../', import.meta.url).pathname, ['README.md']).filter((f) => f.label === 'Email address'), []);
 });
+
+test('only the reviewed game captures pass binary media checks', () => {
+  const root = new URL('../', import.meta.url).pathname;
+  assert.deepEqual(auditFiles(root, ['docs/media/title.gif', 'docs/media/gameplay.gif']), []);
+});
+
+test('unreviewed binary files still require manual review', async () => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const directory = mkdtempSync(join(tmpdir(), 'last-light-safety-'));
+  try {
+    writeFileSync(join(directory, 'unknown.gif'), Buffer.from([0x47, 0x49, 0x46, 0, 0, 0]));
+    const issues = auditFiles(directory, ['unknown.gif']);
+    assert.ok(issues.some((finding) => finding.label === 'Binary file requires metadata review'));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
