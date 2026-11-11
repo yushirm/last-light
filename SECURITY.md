@@ -1,17 +1,19 @@
-# Security policy
+# Security
 
-Last Light is a dependency-free, static browser game. The current `main` branch is the only maintained version.
+Last Light is a small static browser game with no backend or external dependencies. Only the current `main` branch is maintained.
 
-## Reporting a vulnerability
+## Found a security issue?
 
-Please **do not** publish working exploits, credentials, private information, or sensitive reproduction details in a public issue or pull request.
+Please don't put exploit details, passwords, tokens or personal information in a public issue.
 
-Use **Security > Advisories > Report a vulnerability** in this repository if GitHub's private vulnerability reporting is enabled. If that option is unavailable, open a short public issue asking for a private reporting channel, without including sensitive details.
+If private vulnerability reporting is enabled, go to **Security → Advisories → Report a vulnerability** on GitHub. That keeps the report private while it's being reviewed.
 
-Include a concise description, impact, and safe reproduction steps in your private report. Reports are reviewed on a best-effort basis. No response-time or security-fix guarantee is made.
+If you don't see that option, open a public issue saying you'd like to report a security problem privately. Don't include the sensitive details in the issue.
 
-## Data and dependency boundaries
+A useful report explains what you found, why it matters and how to reproduce it safely. Reports are handled as time allows, so there's no guaranteed response or fix deadline.
 
-The game does not require accounts, remote APIs, analytics, cookies, or server credentials. Progress is saved only in the player's browser using `localStorage`. No third-party JavaScript packages are installed at runtime or in CI.
+## Data and checks
 
-The repository's `scripts/check-public-safety.mjs` performs a lightweight preventive scan. It is not a substitute for GitHub secret scanning, push protection, a full code review, or a human review of images and documents before publication.
+The game doesn't ask players to sign in and doesn't send save data anywhere. Progress lives in the player's browser using `localStorage`. No third-party JavaScript packages are installed to run the game or its tests.
+
+CI runs `scripts/check-public-safety.mjs` to catch common credentials, personal details and files that don't belong in a public repository. It's an extra precaution, not a replacement for reviewing changes or using GitHub's secret scanning and push protection.
