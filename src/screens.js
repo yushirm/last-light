@@ -4,7 +4,16 @@ import {ACHIEVEMENTS} from './achievements.js';
 const el=(tag,cls='',text='')=>{const a=document.createElement(tag);if(cls)a.className=cls;if(text!==undefined)a.textContent=String(text);return a;};
 const add=(parent,...kids)=>{parent.append(...kids);return parent;};
 export class ScreenManager {
- constructor(root,handlers){this.root=root;this.handlers=handlers;this.hud=document.getElementById('hud');this.toastElement=document.getElementById('toast');this.current='BOOT';this.settings={};document.getElementById('pause-button').addEventListener('click',()=>handlers.pause());}
+ constructor(root,handlers){
+  this.root=root;
+  this.handlers=handlers;
+  this.projectCredit=root.querySelector('.project-credit');
+  this.hud=document.getElementById('hud');
+  this.toastElement=document.getElementById('toast');
+  this.current='BOOT';
+  this.settings={};
+  document.getElementById('pause-button').addEventListener('click',()=>handlers.pause());
+ }
  setSettings(settings){this.settings={...settings};document.body.classList.toggle('high-contrast',!!settings.highContrast);document.body.classList.toggle('reduced-motion',!!settings.reducedMotion);}
  button(label,fn,cls=''){const b=el('button',`button ${cls}`,label);b.type='button';b.addEventListener('click',fn);return b;}
  panel(title,sub=''){const p=el('section','panel'),h=el('h2','panel-title',title);add(p,h);if(sub)add(p,el('p','panel-subtitle',sub));return p;}
@@ -22,7 +31,9 @@ export class ScreenManager {
      ['WORKSHOP',()=>this.handlers.workshop()],['JOURNAL',()=>this.handlers.journal()],['HOW TO PLAY',()=>this.handlers.howToPlay()],['SETTINGS',()=>this.handlers.settings()]
     ]);
     if(!complete){const b=[...p.querySelectorAll('button')].find(b=>b.textContent.startsWith('ENDLESS'));b.disabled=true;}
-    p.append(el('p','fineprint',`Best endless score: ${s.stats.endlessBestScore.toLocaleString()}  •  A small game about finding your way home.`));break;}
+    p.append(el('p','fineprint',`Best endless score: ${s.stats.endlessBestScore.toLocaleString()}  •  A small game about finding your way home.`));
+    if(this.projectCredit)p.append(this.projectCredit);
+    break;}
    case 'NIGHT_SELECT':{
     p=this.panel('THE NIGHT CHART','Seven watches between the sea and the dawn.');p.classList.add('chart-panel');const list=el('div','scroll-list');const save=payload.save;
     for(const n of NIGHTS){const unlocked=n.id<=save.campaign.highestUnlockedNight,done=save.campaign.completedNights.includes(n.id),card=el('button','night-card');card.type='button';card.disabled=!unlocked;
